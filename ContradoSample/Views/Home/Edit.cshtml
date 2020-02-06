@@ -84,17 +84,6 @@
     var _attributes;
     var _productAttribute = [];
     var _productId=@(Request.QueryString["id"]==null?"0":Request.QueryString["id"]);
-    function OpenProductDialog() {
-        $("#ProductDialog").dialog({
-            width: 700,
-            height: 500,
-            modal: true,
-            close: function (event, ui) {
-                $("#grid").data("kendoGrid").dataSource.read();
-            }
-        });
-        $('#attribute').html('');
-    }
     function DeleteAttributeValue(id) {
         var result = $.grep(_attributes, function (e) { return e.AttributeId == id});
         $.each(result, function (key, value) {
@@ -103,7 +92,7 @@
                 text: value.AttributeName
             }));
         });
-        _productAttribute = $.grep(_productAttribute, function (e) { return e.AttributeId != id });
+        _productAttribute = $.grep(_productAttribute, function (e) { return e.AttributeId == id });
 
         $("#attributeList tr[attributeid='" + id + "']").remove();
     }
@@ -184,6 +173,7 @@
                         AttributeValue: value.AttributeValue,
                     };
                     _productAttribute.push(pa);
+                    $('#attribute').val(value.AttributeId);
                     $('#attribute option:selected').remove();
                 });
             });
@@ -200,7 +190,7 @@
         });
     });
     function FillAttribute() {
-        var result = $.grep(_attributes, function (e) { return e.CategoryId != $('#category').val() });
+        var result = $.grep(_attributes, function (e) { return e.CategoryId == $('#category').val() });
         $('#attribute').html('');
         $.each(result, function (key, value) {
             $("#attribute").append($('<option>', {

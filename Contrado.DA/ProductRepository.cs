@@ -27,11 +27,11 @@ namespace Contrado.DA
             _dbContext.SaveChanges();
             return product;
         }
-        public Product Update(Product product)
+        public override void Update(Product product)
         {
             _dbContext.Entry(product).State = System.Data.Entity.EntityState.Modified;
+            _dbContext.Entry(product.ProductCategory).State = EntityState.Unchanged;
             _dbContext.SaveChanges();
-            return product;
         }
     }
     public interface IProductRepository : IBaseRepository<Product>
