@@ -1,0 +1,164 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<div>
+    <h1>Products</h1>
+    <div style="padding:10px;">
+        <button onclick="Add()">Add</button>
+        <div id="grid"></div>
+    </div>
+</div>
+<div id="ProductDialog" style="display:none;">
+    <div class="form-group row">
+        <div class="control-label col-md-3">
+            Name <span class="error">*</span>
+        </div>
+        <div class="col-md-9">
+            <input type="text" maxlength="50" name="_productName" id="productName" />
+            <span id="spnProductError" class="error">Product Name is required.</span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="control-label col-md-3">
+            Category <span class="error">*</span>
+        </div>
+        <div class="col-md-9">
+            <select name="_category" id="category">
+            </select>
+            <span id="spnCategoryError" class="error">Category is required.</span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="control-label col-md-3">
+            Description <span class="error">*</span>
+        </div>
+        <div class="col-md-9">
+            <input type="text" maxlength="100" name="_productDescription" id="productDescription" />
+            <span id="spnDescriptionError" class="error">Description is required.</span>
+        </div>
+    </div>
+    <div style="border:solid 1px black;">
+        <div class="form-group row">
+            <div class="col-md-12">
+                Product Attributes
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="col-md-4">
+                <select name="_attribute" id="attribute" style="width:150px;">
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="text" id="attributeValue" name="attributeValue" />
+            </div>
+            <div class="col-md-2">
+                <button onclick="AddAttribute()">Add</button>
+            </div>
+        </div>
+        <hr />
+        <div>
+            <div class="form-group row">
+                <div class="col-md-12">
+                    <table id="attributeList" class="table">
+                        <thead>
+                            <tr>
+                                <td>
+                                    Attribute
+                                </td>
+                                <td>
+                                    Value
+                                </td>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-group row mt-5">
+        <div class="control-label col-md-3">
+            <button onclick="SaveProduct()">Save</button>
+        </div>
+        <div class="col-md-4">
+            <button onclick="Cancel()">Cancel</button>
+        </div>
+    </div>
+</div>
+<script>
+    var _categories;
+    var _attributes;
+    var productAttribute = [];
+    function Add() {
+        window.location.href = "/Home/Edit";
+    }
+    $(document).ready(function () {
+        $(".error").hide();
+        LoadGrid();
+    });
+    function LoadGrid() {
+        var _url = "/api/Products";
+        $("#grid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: _url
+                    }
+                },
+                schema: {
+                    total: "TotalRecords",
+                    data: "List",
+                    model: {
+                        fields: {
+                            ProductId: { type: "number" },
+                            ProductName: { type: "string" },
+                            Category: { type: "string" },
+                        }
+                    }
+                },
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            height: 430,
+            filterable: false,
+            sortable: true,
+            pageable: true,
+            columns: [
+                {
+                    field: "ProductName",
+                    title: "ProductName",
+                    width: "200px"
+                },
+                {
+                    field: "Category",
+                    title: "Category",
+                    width: "200px"
+                },
+                {
+                    title: "Edit",
+                    width: 60,
+                    template: '<a title="Edit" href="/Home/Edit?id=#= ProductId #">Edit</a>',
+                    width: "100px"
+                },
+                {
+                    title: "Delete",
+                    width: 60,
+                    template: '<a title="Delete" onclick="deleteProduct(#= ProductId #)" href="javascript:void(0)">Delete</a>',
+                    width: "100px"
+                }
+            ]
+        });
+    }
+    function deleteProduct(id) {
+        $.ajax({
+            url: '/api/Products/'+id,
+            type: 'delete',
+            success: function (data) {
+                alert('deleted');
+                $("#grid").data("kendoGrid").dataSource.read();
+            },
+        });
+    }
+</script>

@@ -1,0 +1,13 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Contrado.DA/bin/Debug
+/.vs/ContradoSample/v16/Server/sqlite3
+/Contrado.DA/obj/Debug
+/Contrado.Repository/bin/Debug
+/Contrado.Repository/obj/Debug
+/Contrado.Services/bin/Debug
+/Contrado.Services/obj/Debug
+/ContradoSample/bin
+/ContradoSample/obj/Debug

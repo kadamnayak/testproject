@@ -1,0 +1,241 @@
+﻿@{
+    ViewBag.Title = "About";
+}
+<h2>Products</h2>
+
+<div id="ProductDialog">
+    <div class="form-group row">
+        <div class="control-label col-md-3">
+            Name <span class="error">*</span>
+        </div>
+        <div class="col-md-9">
+            <input type="text" maxlength="50" name="_productName" id="productName" />
+            <span id="spnProductError" class="error">Product Name is required.</span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="control-label col-md-3">
+            Category <span class="error">*</span>
+        </div>
+        <div class="col-md-9">
+            <select name="_category" id="category">
+            </select>
+            <span id="spnCategoryError" class="error">Category is required.</span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="control-label col-md-3">
+            Description <span class="error">*</span>
+        </div>
+        <div class="col-md-9">
+            <input type="text" maxlength="100" style="width:500px;" name="_productDescription" id="productDescription" />
+            <span id="spnDescriptionError" class="error">Description is required.</span>
+        </div>
+    </div>
+    <div style="border:solid 1px black;">
+        <div class="form-group row">
+            <div class="col-md-12">
+                Product Attributes
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="col-md-4">
+                <select name="_attribute" id="attribute" style="width:150px;">
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="text" id="attributeValue" name="attributeValue" />
+            </div>
+            <div class="col-md-2">
+                <button onclick="AddAttribute()">Add</button>
+            </div>
+        </div>
+        <hr />
+        <div>
+            <div class="form-group row">
+                <div class="col-md-12">
+                    <table id="attributeList" class="table">
+                        <thead>
+                            <tr>
+                                <td>
+                                    Attribute
+                                </td>
+                                <td>
+                                    Value
+                                </td>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-group row mt-5">
+        <div class="control-label col-md-3">
+            <button onclick="SaveProduct()">Save</button>
+        </div>
+        <div class="col-md-4">
+            <button onclick="Cancel()">Cancel</button>
+        </div>
+    </div>
+</div>
+<script>
+    var _categories;
+    var _attributes;
+    var _productAttribute = [];
+    var _productId=@(Request.QueryString["id"]==null?"0":Request.QueryString["id"]);
+    function OpenProductDialog() {
+        $("#ProductDialog").dialog({
+            width: 700,
+            height: 500,
+            modal: true,
+            close: function (event, ui) {
+                $("#grid").data("kendoGrid").dataSource.read();
+            }
+        });
+        $('#attribute').html('');
+    }
+    function DeleteAttributeValue(id) {
+        var result = $.grep(_attributes, function (e) { return e.AttributeId == id});
+        $.each(result, function (key, value) {
+            $("#attribute").append($('<option>', {
+                value: value.AttributeId,
+                text: value.AttributeName
+            }));
+        });
+        _productAttribute = $.grep(_productAttribute, function (e) { return e.AttributeId != id });
+
+        $("#attributeList tr[attributeid='" + id + "']").remove();
+    }
+
+    function AddAttribute() {
+        if ($('#attributeValue').val().trim() == "") {
+            alert("attribute value can not be blank");
+            return;
+        }
+        if ($('#attribute').val() == null) {
+            alert("attribute value can not be blank");
+            return;
+        }
+        $("#attributeList").append('<tr valign="top" class="attributesRow" attributeId="' + $('#attribute').val() + '"><td>' + $('#attribute option:selected').html() + '</td><td>' + $('#attributeValue').val().trim() + '</td><td><button onclick="DeleteAttributeValue(' + $('#attribute').val() + ')">Remove</button></td></tr>');
+        var pa = {
+            AttributeId: $('#attribute').val(),
+            AttributeValue: $('#attributeValue').val().trim(),
+        };
+        _productAttribute.push(pa);
+        $('#attribute option:selected').remove();
+        $("#attributeValue").val("");
+    }
+    function Cancel() {
+        window.location.href = "/Home";
+    }
+    function SaveProduct() {
+        $("span.error").hide();
+        var isValid = true;
+        if ($("#productName").val().trim() == "") {
+            $("#spnProductError").show();
+            isValid = false;
+        }
+        if ($("#category").val() == "0") {
+            $("#spnCategoryError").show();
+            isValid = false;
+        }
+        if ($("#productDescription").val().trim() == "") {
+            $("#spnDescriptionError").show();
+            isValid = false;
+        }
+        if (isValid) {
+            var product = {
+                ProductId: _productId,
+                ProductName: $("#productName").val().trim(),
+                CategoryId: $("#category").val(),
+                Description: $("#productDescription").val().trim(),
+                ProductAttributes: _productAttribute
+            };
+            $(".attributesRow").each(function (index, element) {
+                if ($(this).is("#stop")) {
+                    $("span").text("Stopped at index #" + index);
+                    return false;
+                }
+            });
+            $.ajax({
+                url: '/api/Products/'+_productId,
+                type: _productId==0?'post':'put',
+                data: JSON.stringify(product),
+                dataType: 'json',
+                contentType: 'application/json',
+                success: function (data) {
+                    window.location.href = "/";
+                },
+            });
+        }
+    }
+    function LoadProduct() {
+        if (_productId != 0) {
+            $.get("/api/Products/" + _productId, function (data, status) {
+                $("#productName").val(data.ProductName);
+                $("#category").val(data.CategoryId);
+                $("#productDescription").val(data.Description);
+                FillAttribute();
+                $.each(data.ProductAttributes, function (key, value) {
+                    $("#attributeList").append('<tr valign="top" class="attributesRow" attributeId="' + value.AttributeId + '"><td>' + value.AttributeName + '</td><td>' + value.AttributeValue + '</td><td><button onclick="DeleteAttributeValue(' + value.AttributeId + ')">Remove</button></td></tr>');
+                    var pa = {
+                        AttributeId: value.AttributeId,
+                        AttributeValue: value.AttributeValue,
+                    };
+                    _productAttribute.push(pa);
+                    $('#attribute option:selected').remove();
+                });
+            });
+        }
+    }
+    $(document).ready(function () {
+        $(".error").hide();
+        LoadCategories();
+        LoadAttributes();        
+        $('#category').on('change', function () {
+            FillAttribute();
+            $(".attributesRow").remove();
+            _productAttribute = [];
+        });
+    });
+    function FillAttribute() {
+        var result = $.grep(_attributes, function (e) { return e.CategoryId != $('#category').val() });
+        $('#attribute').html('');
+        $.each(result, function (key, value) {
+            $("#attribute").append($('<option>', {
+                value: value.AttributeId,
+                text: value.AttributeName
+            }));
+        });
+    }
+    function deleteProduct(id) {
+        $.ajax({
+            url: '/api/Products/' + id,
+            type: 'delete',
+            success: function (data) {
+                alert('deleted');
+                $("#grid").data("kendoGrid").dataSource.read();
+            },
+        });
+    }
+    function LoadCategories() {
+        $.get("/api/Common/Categories", function (data, status) {
+            _categories = data;
+            $.each(data, function (key, value) {
+                $("#category").append($('<option>', {
+                    value: value.CategoryId,
+                    text: value.CategoryName
+                }));
+            });
+            $('#category').prepend('<option value="0"></option>');
+            $('#category').val("0");
+            LoadProduct();
+        });
+    }
+    function LoadAttributes() {
+        $.get("/api/Common/GetAllAttributes", function (data, status) {
+            _attributes = data;
+        });
+    }
+</script>
